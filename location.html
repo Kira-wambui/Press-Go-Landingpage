@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Press & Go - Find Nearby Laundry</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="is-preload">
+
+  <div id="wrapper">
+    <div id="header">
+      <span class="logo icon fa-map-marker-alt"></span>
+      <h1>Find Nearby Laundry Marts</h1>
+      <p>Enable your location to see the nearest laundry services, prices, and special offers.</p>
+    </div>
+
+    <div id="main" class="container medium">
+      <button id="enable-location" class="button">Turn on Location</button>
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    const button = document.getElementById('enable-location');
+    const results = document.getElementById('results');
+
+    button.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            const { latitude, longitude } = position.coords;
+            results.innerHTML = `<p>Location detected: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}</p>`;
+
+            // TODO: Fetch nearby laundry marts from backend
+            fetch(`http://localhost:4000/nearby?lat=${latitude}&lng=${longitude}`)
+              .then(res => res.json())
+              .then(data => {
+                if(data.length === 0){
+                  results.innerHTML += "<p>No laundry marts found nearby.</p>";
+                  return;
+                }
+                let html = "<ul>";
+                data.forEach(laundry => {
+                  html += `<li>
+                    <h3>${laundry.name}</h3>
+                    <p>Price: ${laundry.price}</p>
+                    <p>Special Offers: ${laundry.offers}</p>
+                  </li>`;
+                });
+                html += "</ul>";
+                results.innerHTML += html;
+              })
+              .catch(err => {
+                results.innerHTML += "<p>Failed to fetch laundry marts.</p>";
+                console.error(err);
+              });
+
+          },
+          error => {
+            results.innerHTML = `<p>Unable to access location: ${error.message}</p>`;
+          }
+        );
+      } else {
+        results.innerHTML = "<p>Geolocation is not supported by your browser.</p>";
+      }
+    });
+  </script>
+
+</body>
+</html>

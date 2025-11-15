@@ -60,3 +60,38 @@ app.get("/services", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Press & Go backend running on port ${PORT}`);
 });
+
+// Sample laundry marts data
+const laundryMarts = [
+    { name: "Clean & Fresh Laundry", lat: -1.2921, lng: 36.8219, price: "Ksh 500 per load", offers: "10% off on first order" },
+    { name: "Sparkle Laundry Services", lat: -1.2950, lng: 36.8200, price: "Ksh 450 per load", offers: "Free pickup this week" },
+    { name: "Eco Laundry Mart", lat: -1.2900, lng: 36.8230, price: "Ksh 480 per load", offers: "5% off eco-friendly wash" }
+  ];
+  
+  // Simple distance calculation (Haversine formula)
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI/180;
+    const dLon = (lon2 - lon1) * Math.PI/180;
+    const a = 
+      0.5 - Math.cos(dLat)/2 + 
+      Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * 
+      (1 - Math.cos(dLon))/2;
+    return R * 2 * Math.asin(Math.sqrt(a));
+  }
+  
+  // Nearby laundries endpoint
+  app.get("/nearby", (req, res) => {
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+  
+    if(isNaN(lat) || isNaN(lng)) return res.status(400).json([]);
+  
+    const nearby = laundryMarts
+      .map(mart => ({ ...mart, distance: getDistance(lat, lng, mart.lat, mart.lng) }))
+      .filter(mart => mart.distance <= 5) // 5km radius
+      .sort((a,b) => a.distance - b.distance);
+  
+    res.json(nearby);
+  });
+  
